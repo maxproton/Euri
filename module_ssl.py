@@ -19,8 +19,8 @@ def ssl_cert_analysis(domain):
     cert = get_ssl_certificate(domain)
     ssl_cert["subject"] = cert.subject.rfc4514_string()
     ssl_cert["issuer"] = cert.issuer.rfc4514_string()
-    ssl_cert["valid_from"] = cert.not_valid_before
-    ssl_cert["valid_to"] = cert.not_valid_after
+    ssl_cert["valid_from"] = cert.not_valid_before_utc
+    ssl_cert["valid_to"] = cert.not_valid_after_utc
 
     return ssl_cert
 

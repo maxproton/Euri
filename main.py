@@ -81,4 +81,3 @@ if __name__ == '__main__':
         for key, header in headers[args.domain].items():
             print(f"{key} : {header}")
 
-    
