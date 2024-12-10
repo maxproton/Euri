@@ -15,7 +15,10 @@ def robots(domain):
 
         # Regular expression to extract URLs
         urls = re.findall(r'(https?://[^\s]+)', robots_content)
+        disallowed = re.findall(r'Disallow:\s*(/\S*)', robots_content)
         non_sitemap_urls = [url for url in urls if 'sitemap' not in url.lower()]
+        for disallow in disallowed:
+            non_sitemap_urls.append(f"https://{domain}{disallow}")
         return non_sitemap_urls
     except requests.exceptions.RequestException as e:
         print(f"[Error] Could not fetch robots.txt from {domain}: {e}")
@@ -76,76 +79,59 @@ def get_all_sitemap_urls(domain):
 
     return all_urls
 
-async def check_page(session, url, verbose, no_found_size, no_found_text, no_found_size_tol):
-    if verbose:
-        print(f"[Info][Page] Checking {url}")
+def get_urls_from_file(file_path):
+
+    urls = []
     try:
-        async with session.get(url) as response:
-            # 200 being returned doesn't mean there is a page. So we can do some additional checks
-            if response.status == 200:
-                # If the user has provided a general length of a page that is blank we can check + or - 5
+        with open(file_path, 'r') as file:
+            for line in file:
+                # Strip whitespace and skip empty lines
+                url = line.strip()
+                if url:
+                    urls.append(url)
+    except FileNotFoundError:
+        print(f"[ERROR] File not found: {file_path}")
+    except Exception as e:
+        print(f"[ERROR] An error occurred: {e}")
+
+    return urls
+def check_pages(dictionary_path, domain, verbose, no_found_size, no_found_text, no_found_size_tol):
+
+    url_keywords = get_urls_from_file(dictionary_path)
+    existing_pages = []
+
+    for page in url_keywords:
+        url = f"https://{domain}/{page.strip()}"
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code in (200, 401):
                 if no_found_size > 0:
                     headers = response.headers
                     content_length = headers.get('Content-Length')
                     if content_length:
                         content_length = int(content_length)
                         if verbose:
-                            print(f"[Info]Page size: {content_length}")
+                            print(f"[Info] Page size: {content_length}")
                         if abs(content_length - no_found_size) <= int(no_found_size_tol):
                             if verbose:
                                 print(f"[Info][Page] {url} not found according to content length check.")
                         else:
-                            return url
+                            existing_pages.append(url)
                 # If the user has provided a key string that is present in all no found pages, we can test for this
                 elif no_found_text != "":
-                    content = await response.text()
+                    content = response.text
                     if no_found_text in content:
                         if verbose:
                             print(f"[Info][Page] {url} not found according to string matching.")
                     else:
-                        return url
+                        existing_pages.append(url)
                 else:
                     # User has not provided a content length or a string check, so assuming returning a 200 is correct
-                    return url
-    except Exception as e:
-        pass  # Ignore errors (e.g., DNS resolution errors)
-    return None
+                    existing_pages.append(url)
+            else:
+                if verbose:
+                    print(f"[Info][URL NOT FOUND] {url} ({response.status_code})")
+        except requests.exceptions.RequestException as e:
+            print(f"[Error] Could not fetch {url}: {e}")
 
-
-async def enumerate_pages(dictionary_path, domain, verbose, no_found_size, no_found_text, no_found_size_tol,concurrency=5):
-    with open(dictionary_path, "r") as file:
-        url_keywords = [line.strip() for line in file if line.strip()]
-
-    found_subdomains = []
-    timeout = ClientTimeout(total=10)
-
-    # Create a session with aiohttp
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        # Semaphore to control concurrency
-        sem = asyncio.Semaphore(concurrency)
-
-        # Define a task for each subdomain
-        async def sem_task(url):
-            async with sem:
-                result = await check_page(session, url, verbose, no_found_size, no_found_text, no_found_size_tol)
-                if result:
-                    found_subdomains.append(result)
-
-        # Create tasks for all dictionary keywords
-        tasks = []
-        for keyword in url_keywords:
-            page_url = f"https://{domain}/{keyword}"
-            tasks.append(sem_task(page_url))
-
-        # Run all tasks
-        await asyncio.gather(*tasks)
-
-    return found_subdomains
-
-
-def run_page_enumeration(dictionary_path, domain, verbose, no_found_size, no_found_text, no_found_size_tol):
-    found_pages = asyncio.run(enumerate_pages(dictionary_path, domain, verbose, no_found_size, no_found_text, no_found_size_tol))
-    if verbose:
-        for page in found_pages:
-            print(f"[Info] Found Page :{page}")
-    return found_pages
+    return existing_pages

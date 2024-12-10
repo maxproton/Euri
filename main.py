@@ -136,20 +136,13 @@ if __name__ == '__main__':
             no_found_text = str(args.no_found_text)
         except Exception:
             no_found_text = ""
-            
-    # this bits a little broken so need to fix
 
-    pages = module_pages.run_page_enumeration(
+    pages = module_pages.check_pages(
         enumeration_list_pages,
         args.domain,
         args.verbose,
-        args.no_found_size,
-        args.no_found_text,
+        no_found_size,
+        no_found_text,
         args.no_found_size_tol
     )
 
-
-    if args.verbose:
-        print(pages)
-        print(robots)
-        print(sitemaps)
