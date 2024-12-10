@@ -10,15 +10,19 @@ import module_dns
 import module_subdomain
 import module_ssl
 import module_headers
+import module_email
+import module_pages
 from dotenv import load_dotenv
 import os
 
 domain = ""
 dns_records = {}
 sub_domains = {}
-pages = {}
+pages = []
 ssl_certificates = {}
 headers = {}
+cookies = {}
+email_addresses = []
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process a file and perform operations on its lines.")
@@ -26,6 +30,11 @@ def parse_arguments():
     parser.add_argument("-s", "--suppress-less-common-dns", action="store_true",  help="Suppress less common DNS record checks")
     parser.add_argument("-v", "--verbose", action="store_true", help="Shows you everything!")
     parser.add_argument("-g", "--no-google", action="store_true", help="Do not perform google searches")
+    parser.add_argument("-aa", "--no-header-check", action="store_true", help="Do not analyse the resultant header for clues to the framework")
+    parser.add_argument("-bb", "--no-subdomain-brute", action="store_true", help="Do not perform a subdomain brute force")
+    parser.add_argument("-te", "--no-found-size", type=int, required=False, help="Some sites return 200 with custom error page, use this to specify the size of the error page")
+    parser.add_argument("-ta", "--no-found-text", type=str, required=False, help="Some sites return 200 with custom error page, use this to specify the text to look for in an error page")
+    parser.add_argument("-tb", "--no-found-size-tol", type=int, required=False, help="Provide a tolerance level +- for checking content length")
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -41,10 +50,16 @@ if __name__ == '__main__':
         args.verbose
     )
     if args.verbose:
-        print("---DNS RECORDS---")
+        print("[Info] DNS RECORDS")
         for type, answer in dns_records.items():
             for record in answer:
                 print(f"{type} Record: {record}")
+
+    # Enumerate over the txt records and check they have not put an email address in it
+    for type, answer in dns_records.items():
+        for record in answer:
+            if record == "TXT":
+                email_addresses = email_addresses + module_email.extract_emails(answer)
 
     # Subdomain lookup
     print(f"[Task] Performing non-bruteforce subdomain collection for {args.domain}")
@@ -60,24 +75,81 @@ if __name__ == '__main__':
             100
         )
 
-    sub_domains["new"] = google_dorks_subdomain + dns_subdomains
+    brute_force_subdomains = []
+    if not args.no_subdomain_brute:
+        print(f"[Task] Performing Subdomain enumberation from dictionary lists/subdomains.txt on {args.domain}")
+        brute_force_subdomains = module_subdomain.run_subdomain_enumeration("lists/subdomains.txt", args.domain, args.verbose)
+
+    sub_domains["new"] = google_dorks_subdomain + dns_subdomains + brute_force_subdomains
     if args.verbose:
         for subdomain in sub_domains["new"]:
-            print(f"subdomain: {subdomain}")
+            print(f"[Info] {subdomain} Found")
 
 
     # SSL Certificate Parsing of main domain
     print(f"[Task] Performing SSL cert analysis")
     ssl_certificates["main"] = module_ssl.ssl_cert_analysis(args.domain)
     if args.verbose:
-        print(ssl_certificates["main"]["subject"])
-        print(ssl_certificates["main"]["issuer"])
-        print(ssl_certificates["main"]["valid_from"])
-        print(ssl_certificates["main"]["valid_to"])
+        print(f"[Info][SSL] Subject: {ssl_certificates['main']['subject']}")
+        print(f"[Info][SSL] Issuer: {ssl_certificates['main']['issuer']}")
+        print(f"[Info][SSL] Valid-From: {ssl_certificates['main']['valid_from']}")
+        print(f"[Info][SSL] Valid-To: {ssl_certificates['main']['valid_to']}")
+    email_addresses = email_addresses + module_email.extract_emails(ssl_certificates['main']['subject'])
+    email_addresses = email_addresses + module_email.extract_emails(ssl_certificates['main']['issuer'])
 
     # Header extraction from main domain
+    print(f"[Task] Getting all header values for {args.domain}")
     headers[args.domain] = module_headers.get_header(args.domain)
     if args.verbose:
         for key, header in headers[args.domain].items():
-            print(f"{key} : {header}")
+            print(f"[Info][Header] {key} : {header}")
 
+    # Sometimes emails are stashed in the headers?
+    for key, header in headers[args.domain].items():
+        email_addresses = email_addresses + module_email.extract_emails(header)
+
+    # Enumerate cookies
+    cookies = module_headers.get_cookies(headers[args.domain].items())
+
+    if args.verbose:
+        for key, value in cookies.items():
+            print(f"[Info][Cookie] {key} : {value}")
+
+    # Check Robots and Sitemap for pages
+    print(f"[Task] Collecting pages from available sitemaps {args.domain}")
+    robots = module_pages.robots(args.domain)
+    sitemaps = module_pages.get_all_sitemap_urls(args.domain)
+
+    # Enumerate using page file to find pages
+    enumeration_list_pages = "lists/pages.txt"
+    print(f"[Task] Enumerating pages from list {enumeration_list_pages}")
+    no_found_size = 0
+    if args.no_found_size is not None:
+        try:
+            no_found_size = int(args.no_found_size)
+        except Exception:
+            no_found_size = 0
+
+    no_found_text = ""
+    if args.no_found_text is not None:
+        try:
+            no_found_text = str(args.no_found_text)
+        except Exception:
+            no_found_text = ""
+            
+    # this bits a little broken so need to fix
+
+    pages = module_pages.run_page_enumeration(
+        enumeration_list_pages,
+        args.domain,
+        args.verbose,
+        args.no_found_size,
+        args.no_found_text,
+        args.no_found_size_tol
+    )
+
+
+    if args.verbose:
+        print(pages)
+        print(robots)
+        print(sitemaps)

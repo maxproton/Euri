@@ -1,5 +1,6 @@
 import socket
 import ssl
+import re
 from datetime import datetime
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -16,11 +17,13 @@ def get_ssl_certificate(hostname):
             return cert
 
 def ssl_cert_analysis(domain):
+    if domain.find("https://") != -1:
+        domain = "https://" + domain
     cert = get_ssl_certificate(domain)
-    ssl_cert["subject"] = cert.subject.rfc4514_string()
-    ssl_cert["issuer"] = cert.issuer.rfc4514_string()
-    ssl_cert["valid_from"] = cert.not_valid_before_utc
-    ssl_cert["valid_to"] = cert.not_valid_after_utc
+    ssl_cert["subject"] = str(cert.subject.rfc4514_string())
+    ssl_cert["issuer"] = str(cert.issuer.rfc4514_string())
+    ssl_cert["valid_from"] = str(cert.not_valid_before)
+    ssl_cert["valid_to"] = str(cert.not_valid_after)
 
     return ssl_cert
 

@@ -58,7 +58,7 @@ def record_lookup(domain, type, verbose):
             dns_records[type].append(answer)
     except dns.resolver.NoAnswer:
         if verbose:
-            print(f"No {type} record found.")
+            print(f"[Info] No {type} record found.")
     except Exception as e:
         if verbose:
-            print(f"Error: {e}")
+            print(f"[Error] {e}")

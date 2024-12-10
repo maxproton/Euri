@@ -1,0 +1,5 @@
+admin
+administration
+about
+contact
+administrator

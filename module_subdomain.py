@@ -1,3 +1,6 @@
+import aiohttp
+import asyncio
+from aiohttp import ClientTimeout
 import subprocess
 import requests
 from bs4 import BeautifulSoup
@@ -16,7 +19,7 @@ def get_ns_records(domain):
 
         return ns_records
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"[Error] {e}")
         return []
 
 
@@ -35,7 +38,7 @@ def find_subdomains_with_nslookup(domain):
                 if domain in line and line != domain:
                     subdomains.add(line.split()[0])
         except Exception as e:
-            print(f"Error querying {ns}: {e}")
+            print(f"[Error] querying {ns}: {e}")
     return extract_subdomains(subdomains, domain)
 
 def extract_subdomains(urls, target_domain):
@@ -90,4 +93,55 @@ def google_search_links(query, api_key, cse_id, start_index=1, num_results=10):
         start_index += 10
 
     return extract_subdomains(links[:num_results], query)  # Limit to the requested number of results
+
+
+async def check_subdomain(session, subdomain_url, verbose):
+    if verbose:
+        print(f"[Info] Checking {subdomain_url}")
+    try:
+        async with session.get(subdomain_url) as response:
+            if response.status == 200:
+                return subdomain_url
+    except Exception as e:
+        pass  # Ignore errors (e.g., DNS resolution errors)
+    return None
+
+
+async def enumerate_subdomains(dictionary_path, domain, verbose, concurrency=5):
+    with open(dictionary_path, "r") as file:
+        subdomain_keywords = [line.strip() for line in file if line.strip()]
+
+    found_subdomains = []
+    timeout = ClientTimeout(total=10)
+
+    # Create a session with aiohttp
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        # Semaphore to control concurrency
+        sem = asyncio.Semaphore(concurrency)
+
+        # Define a task for each subdomain
+        async def sem_task(subdomain_url):
+            async with sem:
+                result = await check_subdomain(session, subdomain_url, verbose)
+                if result:
+                    found_subdomains.append(result)
+
+        # Create tasks for all dictionary keywords
+        tasks = []
+        for keyword in subdomain_keywords:
+            subdomain_url = f"https://{keyword}.{domain}"
+            tasks.append(sem_task(subdomain_url))
+
+        # Run all tasks
+        await asyncio.gather(*tasks)
+
+    return found_subdomains
+
+
+def run_subdomain_enumeration(dictionary_path, domain, verbose):
+    found_subdomains = asyncio.run(enumerate_subdomains(dictionary_path, domain, verbose))
+    if verbose:
+        for subdomain in found_subdomains:
+            print(f"[Info] Found Subdomain :{subdomain}")
+    return found_subdomains
 
