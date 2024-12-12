@@ -17,8 +17,9 @@ frameworks = {
         'Magento': 'frontend',
         'Shopify': '_shopify_y'
     },
-    'Header': {
-        'Server': {
+
+    'header': {
+        'server': {
             'nginx': 'NGINX, a lightweight, high-performance web server and reverse proxy.',
             'Apache': 'Apache HTTP Server, one of the most popular web servers.',
             'cloudflare': 'Cloud flare proxy Services',
@@ -43,3 +44,27 @@ frameworks = {
     }
 }
 
+def check_for_server_hinting(value):
+    identified_hinting = {}
+
+    for hinting, description in frameworks['header']['server'].items():
+        if hinting in value:
+            identified_hinting[hinting] = {
+                'description': description,
+                'version': "Not known"
+            }
+            version = value.split("/", 1)[1] if "/" in value else "Not known"
+            if version is not None:
+                identified_hinting[hinting]['version'] = version
+
+
+    return identified_hinting
+
+def check_for_cookie_hinting(value):
+    identified_hinting = []
+
+    for hinting, description in frameworks['cookie'].items():
+        if description in value:
+            identified_hinting.append(hinting)
+
+    return identified_hinting

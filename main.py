@@ -2,6 +2,7 @@ import csv
 
 import argparse
 import banner
+import module_framework
 import module_headers
 import module_ssl
 import ports
@@ -23,6 +24,7 @@ ssl_certificates = {}
 headers = {}
 cookies = {}
 email_addresses = []
+technology_stack = {}
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process a file and perform operations on its lines.")
@@ -146,3 +148,22 @@ if __name__ == '__main__':
         args.no_found_size_tol
     )
 
+    server = {}
+    # Check technology stack in headers for hints at the type of server and version number
+    for key, header in headers[args.domain].items():
+        if key != "Set-Cookie" and key != "Cookie":
+            server.update(module_framework.check_for_server_hinting(header))
+
+    technology_stack['server'] = server
+    if args.verbose:
+        for type, server_hinting in technology_stack['server'].items():
+            print(f"Server hinting {type} - {server_hinting['version']} - {server_hinting['description']}")
+
+    cookie_stack = []
+    for key, value in cookies.items():
+        cookie_stack = cookie_stack + module_framework.check_for_cookie_hinting(key)
+    technology_stack['language'] = cookie_stack
+
+    if args.verbose:
+        for cook in technology_stack['language']:
+            print(f"language : {cook}")
