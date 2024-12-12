@@ -13,6 +13,7 @@ import module_ssl
 import module_headers
 import module_email
 import module_pages
+import module_report
 from dotenv import load_dotenv
 import os
 
@@ -157,7 +158,7 @@ if __name__ == '__main__':
     technology_stack['server'] = server
     if args.verbose:
         for type, server_hinting in technology_stack['server'].items():
-            print(f"Server hinting {type} - {server_hinting['version']} - {server_hinting['description']}")
+            print(f"[Info] Server hinting {type} - {server_hinting['version']} - {server_hinting['description']}")
 
     cookie_stack = []
     for key, value in cookies.items():
@@ -166,4 +167,26 @@ if __name__ == '__main__':
 
     if args.verbose:
         for cook in technology_stack['language']:
-            print(f"language : {cook}")
+            print(f"[Info] language : {cook}")
+
+    library_frameworks = module_framework.find_web_frameworks(args.domain)
+    technology_stack['web_technology'] = library_frameworks
+
+    if args.verbose:
+        for library in library_frameworks:
+            print(f"[Info] {library}")
+    #.env and config files
+    #.git and git content
+    # content analysis
+    # all images and meta data
+    # all links and indexing (interal add external note)
+    # social media link s
+    # git hub references
+    # email references
+    # word count
+    # dictionary generation
+    # hash value
+    # ip extraction
+    # checks for links for github, gitlab, bitbucket 
+
+    module_report.generate_summary(technology_stack)

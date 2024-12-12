@@ -51,3 +51,7 @@ Use the following arguments to target the size and tolerance or the string
 ### Lists
 Its important to note Euri does not ship with lists re-installed. Please place your own 
 lists for enumeration in the lists folder under the appropriate name. 
+
+### Config hunting
+The script does a check for config files (Standard IIS, nginx, apache2 and tomcat servers) and also for .git files
+the present of a .git file would indicate a potential github leak. 

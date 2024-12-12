@@ -2,3 +2,4 @@ dnspython
 python-dotenv
 aiohttp
 asyncio
+jinja2
