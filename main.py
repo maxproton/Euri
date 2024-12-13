@@ -275,11 +275,10 @@ if __name__ == '__main__':
     # dictionary generation
     print(f"[Task] Collecting dictionary of words")
     for word in words:
-        if dictionary[word] is None:
-            dictionary[word] = 1
-        else:
-            dictionary[word] = dictionary[word] + 1
-        if args.verbose:
+        dictionary[word] = word
+
+    if args.verbose:
+        for word in dictionary.items():
             print(f"[Info][Dictionary] Adding {word} to dictionary")
 
     # hash value
@@ -309,6 +308,8 @@ if __name__ == '__main__':
         'heading': 'Welcome to Jinja2',
         'items': ['Item 1', 'Item 2', 'Item 3']
     }
+
+    # Dictionary needs fixing
 
     #report_title = module_report.generate_summary(data)
     #print(f"[Task] Finshed. Report available at {report_title}")

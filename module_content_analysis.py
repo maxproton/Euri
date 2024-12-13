@@ -112,6 +112,8 @@ def link_harvest(domain: str, html_content: str, verbose: bool):
 
     # Find all the <a> tags with href attributes
     links = soup.find_all('a', href=True)
+    if "http" not in domain:
+        domain = f"https://{domain}"
 
     for link in links:
         link_url = link['href']
@@ -125,17 +127,20 @@ def link_harvest(domain: str, html_content: str, verbose: bool):
             link_response.raise_for_status()  # Will raise an exception for 4xx, 5xx errors
 
             if link_response.status_code == 200:
-                live_links.append(link_url)
-                if verbose:
-                    print(f"[Info][Link] Link discovered and alive {link_url}")
+                if link_url not in live_links:
+                    live_links.append(link_url)
+                    if verbose:
+                        print(f"[Info][Link] Link discovered and alive {link_url}")
             if link_response.status_code == 403:
-                access_denied.append(link_url)
-                if verbose:
-                    print(f"[Info][Link] Link discovered with a 403 {link_url}")
+                if link_url not in access_denied:
+                    access_denied.append(link_url)
+                    if verbose:
+                        print(f"[Info][Link] Link discovered with a 403 {link_url}")
         except requests.exceptions.RequestException as e:
-            dead_links.append(link_url)
-            if verbose:
-                print(f"[Info][Link] Dead link located {link_url}")
+            if link_url not in dead_links:
+                dead_links.append(link_url)
+                if verbose:
+                    print(f"[Info][Link] Dead link located {link_url}")
 
     return_items = {
         'live': live_links,
@@ -190,12 +195,9 @@ def extract_ip_addresses(text):
 def extract_comments_from_html(html_content):
 
     html_comment_pattern = r'<!--(.*?)-->'
-    js_comment_pattern = r'//.*?(?=\n|$)'
-
+    # js_comment_pattern = r'//.*?(?=\n|$)'
     html_comments = re.findall(html_comment_pattern, html_content, re.DOTALL)
-
-    js_comments = re.findall(js_comment_pattern, html_content)
-
-    all_comments = html_comments + js_comments
+    # js_comments = re.findall(js_comment_pattern, html_content)
+    all_comments = html_comments #+ js_comments
 
     return all_comments
