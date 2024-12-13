@@ -14,8 +14,11 @@ import module_headers
 import module_email
 import module_pages
 import module_report
+import module_config
+import module_content_analysis
 from dotenv import load_dotenv
 import os
+import hashlib
 
 domain = ""
 dns_records = {}
@@ -26,6 +29,17 @@ headers = {}
 cookies = {}
 email_addresses = []
 technology_stack = {}
+config_files = {}
+git_repo = {}
+images = {}
+links = {}
+social = {}
+repo = {}
+word_count = 0
+dictionary = {}
+content_hash = ""
+ip_addresses = []
+comments = []
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process a file and perform operations on its lines.")
@@ -46,7 +60,7 @@ if __name__ == '__main__':
     load_dotenv()
 
     # DNS lookup
-    print(f"[Task] Performing DNS Lookup for {args.domain}")
+    print(f"[Task] Performing DNS Lookup for {args.domain}.")
     dns_records = module_dns.dns_enumeration(
         args.domain,
         args.suppress_less_common_dns,
@@ -65,7 +79,7 @@ if __name__ == '__main__':
                 email_addresses = email_addresses + module_email.extract_emails(answer)
 
     # Subdomain lookup
-    print(f"[Task] Performing non-bruteforce subdomain collection for {args.domain}")
+    print(f"[Task] Performing non-bruteforce subdomain collection for {args.domain}.")
     dns_subdomains = module_subdomain.find_subdomains_with_nslookup(args.domain)
     google_dorks_subdomain = []
     if not args.no_google:
@@ -80,7 +94,7 @@ if __name__ == '__main__':
 
     brute_force_subdomains = []
     if not args.no_subdomain_brute:
-        print(f"[Task] Performing Subdomain enumberation from dictionary lists/subdomains.txt on {args.domain}")
+        print(f"[Task] Performing Subdomain enumberation from dictionary lists/subdomains.txt on {args.domain}.")
         brute_force_subdomains = module_subdomain.run_subdomain_enumeration("lists/subdomains.txt", args.domain, args.verbose)
 
     sub_domains["new"] = google_dorks_subdomain + dns_subdomains + brute_force_subdomains
@@ -90,7 +104,7 @@ if __name__ == '__main__':
 
 
     # SSL Certificate Parsing of main domain
-    print(f"[Task] Performing SSL cert analysis")
+    print(f"[Task] Performing SSL cert analysis.")
     ssl_certificates["main"] = module_ssl.ssl_cert_analysis(args.domain)
     if args.verbose:
         print(f"[Info][SSL] Subject: {ssl_certificates['main']['subject']}")
@@ -101,7 +115,7 @@ if __name__ == '__main__':
     email_addresses = email_addresses + module_email.extract_emails(ssl_certificates['main']['issuer'])
 
     # Header extraction from main domain
-    print(f"[Task] Getting all header values for {args.domain}")
+    print(f"[Task] Getting all header values for {args.domain}.")
     headers[args.domain] = module_headers.get_header(args.domain)
     if args.verbose:
         for key, header in headers[args.domain].items():
@@ -119,13 +133,13 @@ if __name__ == '__main__':
             print(f"[Info][Cookie] {key} : {value}")
 
     # Check Robots and Sitemap for pages
-    print(f"[Task] Collecting pages from available sitemaps {args.domain}")
+    print(f"[Task] Collecting pages from available sitemaps {args.domain}.")
     robots = module_pages.robots(args.domain)
     sitemaps = module_pages.get_all_sitemap_urls(args.domain)
 
     # Enumerate using page file to find pages
     enumeration_list_pages = "lists/pages.txt"
-    print(f"[Task] Enumerating pages from list {enumeration_list_pages}")
+    print(f"[Task] Enumerating pages from list {enumeration_list_pages}.")
     no_found_size = 0
     if args.no_found_size is not None:
         try:
@@ -150,7 +164,9 @@ if __name__ == '__main__':
     )
 
     server = {}
+
     # Check technology stack in headers for hints at the type of server and version number
+    print(f"[Task] Checking technology stack.")
     for key, header in headers[args.domain].items():
         if key != "Set-Cookie" and key != "Cookie":
             server.update(module_framework.check_for_server_hinting(header))
@@ -160,6 +176,7 @@ if __name__ == '__main__':
         for type, server_hinting in technology_stack['server'].items():
             print(f"[Info] Server hinting {type} - {server_hinting['version']} - {server_hinting['description']}")
 
+    print(f"[Task] Stealing cookies and putting them in our jar.")
     cookie_stack = []
     for key, value in cookies.items():
         cookie_stack = cookie_stack + module_framework.check_for_cookie_hinting(key)
@@ -169,24 +186,129 @@ if __name__ == '__main__':
         for cook in technology_stack['language']:
             print(f"[Info] language : {cook}")
 
+    print(f"[Task] Checking for presents of libraries.")
     library_frameworks = module_framework.find_web_frameworks(args.domain)
     technology_stack['web_technology'] = library_frameworks
 
     if args.verbose:
         for library in library_frameworks:
             print(f"[Info] {library}")
-    #.env and config files
-    #.git and git content
-    # content analysis
-    # all images and meta data
-    # all links and indexing (interal add external note)
-    # social media link s
-    # git hub references
-    # email references
-    # word count
-    # dictionary generation
-    # hash value
-    # ip extraction
-    # checks for links for github, gitlab, bitbucket 
 
-    module_report.generate_summary(technology_stack)
+    # Check for config files
+    print(f"[Task] Checking for config files.")
+    config_files = module_config.check_for_config_files(args.domain, args.verbose)
+    if args.verbose:
+        for config_file, config_description in config_files.items():
+            print(f"[Info] Found Config file {config_file} - {config_description}")
+
+    # .git and git content
+    print(f"[Task] Checking for git repos.")
+    git_repo = module_config.get_git(args.domain, args.verbose)
+    if args.verbose:
+        if git_repo:
+            print(f"[Info] Found Git tresure..")
+            for name, description in git_repo.items():
+                print(f"[Info][GIT] {name} : : {description}")
+        else:
+            print("[Info] Not git repos found :(")
+
+    # Content Analysis block
+    # ----------------------
+    print(f"[Task] Starting content analysis.")
+    content = module_content_analysis.get_content(args.domain)
+
+    # all images and meta data
+    print(f"[Task] Checking images on {args.domain}")
+    images = module_content_analysis.extract_image_metadata(content, args.domain)
+    if args.verbose:
+        for image_url, metadata in images.items():
+            print(f"[Info][Images] Image {image_url} contains the following metadata")
+            for metadata_key, metadata_value in metadata.items():
+                print(f"[Info][Images][{image_url}] {metadata_key} : {metadata_value}")
+
+    # all links and indexing (interal add external note)
+    print(f"[Task] Checking link in content.")
+    links = module_content_analysis.link_harvest(args.domain, content, args.verbose)
+
+    if args.verbose:
+        for keys, values in links.items():
+            if keys == "live":
+                for url in values:
+                    print(f"[Info][Live] {url}")
+            if keys == "dead":
+                for url in values:
+                    print(f"[Info][Dead] {url}")
+            if keys == "403":
+                for url in values:
+                    print(f"[Info][unauthorised] {url}")
+
+    # social media links
+    print(f"[Task] Checking for Social Media links.")
+    social = module_content_analysis.find_social_media(links)
+
+    if args.verbose:
+        for social_key, social_value in social.items():
+            print(f"[Info][Social] Social media link discovered for {social_value}")
+
+    # git references
+    print(f"[Task] Checking for Source Control Links.")
+    repo = module_content_analysis.find_github_references(links)
+
+    if args.verbose:
+        for git_key, git_value in repo.items():
+            print(f"[Info][Repo] Found {git_value} : {git_key}")
+
+    # email references
+    print(f"[Task] Checking html content for emails")
+    email_addresses = email_addresses + module_email.extract_emails(module_content_analysis.remove_html(content))
+
+    if args.verbose:
+        print(f"[Info][Email] Count so far: ")
+        for email_address in email_addresses:
+            print(f"[Info][Email]{email_address}")
+
+    # word count
+    words = module_content_analysis.remove_html(content).split()
+    word_count = len(words)
+    print(f"[Task] Word count complete. There are {word_count}")
+
+    # dictionary generation
+    print(f"[Task] Collecting dictionary of words")
+    for word in words:
+        if dictionary[word] is None:
+            dictionary[word] = 1
+        else:
+            dictionary[word] = dictionary[word] + 1
+        if args.verbose:
+            print(f"[Info][Dictionary] Adding {word} to dictionary")
+
+    # hash value
+    content_hash = hashlib.sha512(module_content_analysis.remove_html(content).encode()).hexdigest()
+    print(f"[Task] Content hash is {content_hash}")
+
+    # ip extraction
+    print(f"[Task] Extracting IP addresses")
+    ip_addresses = module_content_analysis.extract_ip_addresses(content)
+
+    if args.verbose:
+        for ip in ip_addresses:
+            print(f"[Info][ip] {ip} discovered in body of document")
+
+    # comments extractor
+    print(f"[Task] Comment hunting")
+    comments = module_content_analysis.extract_comments_from_html(content)
+
+    if args.verbose:
+        for comment in comments:
+            print(f"[Info][comment] {comment}")
+
+    print(f"[Task] Generating Report..")
+
+    data = {
+        'title': 'My Jinja2 Example',
+        'heading': 'Welcome to Jinja2',
+        'items': ['Item 1', 'Item 2', 'Item 3']
+    }
+
+    #report_title = module_report.generate_summary(data)
+    #print(f"[Task] Finshed. Report available at {report_title}")

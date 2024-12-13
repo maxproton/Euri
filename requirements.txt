@@ -3,3 +3,7 @@ python-dotenv
 aiohttp
 asyncio
 jinja2
+beautifulsoup4
+pillow
+piexif
+exifread

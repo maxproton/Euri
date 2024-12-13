@@ -5,12 +5,6 @@ def generate_summary(data):
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template('template/standard_report.html')
 
-    data = {
-        'title': 'My Jinja2 Example',
-        'heading': 'Welcome to Jinja2',
-        'items': ['Item 1', 'Item 2', 'Item 3']
-    }
-
     output = template.render(data)
     current_time = datetime.now()
 
@@ -18,4 +12,4 @@ def generate_summary(data):
     with open(f"reports/{formatted_time}-report-standard.html", 'w') as f:
         f.write(output)
 
-    print("[Task] Report Generated")
+    return f"reports/{formatted_time}-report-standard.html"
