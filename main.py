@@ -275,23 +275,36 @@ if __name__ == '__main__':
     # dictionary generation
     print(f"[Task] Collecting dictionary of words")
     for word in words:
-        dictionary[word] = word
+        dictionary[word.lower()] = word
+    dictionary = {key: dictionary[key] for key in sorted(dictionary)}
 
     if args.verbose:
         for word in dictionary.items():
             print(f"[Info][Dictionary] Adding {word} to dictionary")
 
     # hash value
-    content_hash = hashlib.sha512(module_content_analysis.remove_html(content).encode()).hexdigest()
-    print(f"[Task] Content hash is {content_hash}")
+    content_hash = {
+        'SHA512': hashlib.sha512(module_content_analysis.remove_html(content).encode()).hexdigest(),
+        'SHA256': hashlib.sha256(module_content_analysis.remove_html(content).encode()).hexdigest(),
+        'MD5': hashlib.md5(module_content_analysis.remove_html(content).encode()).hexdigest()
+    }
+    print(f"[Task] Creating content hashes.")
+
+    if args.verbose:
+        for key, content in content_hash.items():
+            print(f"[Info][Hash][{key}]{content}")
 
     # ip extraction
     print(f"[Task] Extracting IP addresses")
     ip_addresses = module_content_analysis.extract_ip_addresses(content)
+    for key, value in dns_records.items():
+        if key == "A":
+            for ip_address in value:
+                ip_addresses.append(ip_address)
 
     if args.verbose:
         for ip in ip_addresses:
-            print(f"[Info][ip] {ip} discovered in body of document")
+            print(f"[Info][ip] {ip} discovered in body of document and A records")
 
     # comments extractor
     print(f"[Task] Comment hunting")
@@ -304,12 +317,29 @@ if __name__ == '__main__':
     print(f"[Task] Generating Report..")
 
     data = {
-        'title': 'My Jinja2 Example',
-        'heading': 'Welcome to Jinja2',
-        'items': ['Item 1', 'Item 2', 'Item 3']
+        'title': f"Euri report for {args.domain}",
+        'heading': f"Target: {args.domain}",
+        'dns_records': dns_records,
+        'sub_domains': sub_domains,
+        'pages': pages,
+        'ssl_certificates': ssl_certificates,
+        'headers': headers,
+        'cookies': cookies,
+        'email_addresses': email_addresses,
+        'technology_stack': technology_stack,
+        'config_files': config_files,
+        'git_repo': git_repo,
+        'images': images,
+        'links': links,
+        'social': social,
+        'repo': repo,
+        'word_count': word_count,
+        'dictionary': dictionary,
+        'content_hash': content_hash,
+        'ip_addresses': ip_addresses,
+        'comments': comments
     }
 
-    # Dictionary needs fixing
 
-    #report_title = module_report.generate_summary(data)
-    #print(f"[Task] Finshed. Report available at {report_title}")
+    report_title = module_report.generate_summary(data, args.domain)
+    print(f"[Task] Finshed. Report available at {report_title}")

@@ -1,4 +1,5 @@
 import requests
+import re
 
 frameworks = {
     'cookie': {
@@ -110,15 +111,17 @@ def check_for_server_hinting(value):
     identified_hinting = {}
 
     for hinting, description in frameworks['header']['server'].items():
-        if hinting in value:
+        # This ensures partial substrings like 'SESS' won't unintentionally match 'PHPSESSID'
+        pattern = rf'\b{re.escape(hinting)}\b'
+        if re.search(pattern, value):
             identified_hinting[hinting] = {
                 'description': description,
                 'version': "Not known"
             }
+            # Check for version after "/" and update identified_hinting
             version = value.split("/", 1)[1] if "/" in value else "Not known"
             if version is not None:
                 identified_hinting[hinting]['version'] = version
-
 
     return identified_hinting
 
@@ -126,7 +129,8 @@ def check_for_cookie_hinting(value):
     identified_hinting = []
 
     for hinting, description in frameworks['cookie'].items():
-        if description in value:
+        pattern = rf'\b{re.escape(description)}\b'
+        if re.search(pattern, value):
             identified_hinting.append(hinting)
 
     return identified_hinting
@@ -143,8 +147,11 @@ def find_web_frameworks(url):
         detected_frameworks = []
 
         for framework, identifier in frameworks['library'].items():
-            if isinstance(identifier, str) and identifier.lower() in html_content:
+            pattern = rf'\b{re.escape(identifier)}\b'
+            if re.search(pattern, html_content):
                 detected_frameworks.append(framework)
+            #if isinstance(identifier, str) and identifier.lower() in html_content:
+            #    detected_frameworks.append(framework)
 
         return detected_frameworks
 

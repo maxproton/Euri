@@ -104,14 +104,14 @@ def extract_git_config(config_content):
             git_info["url"] = line.split("=", 1)[-1].strip()
     return git_info
 
-def check_for_config_files(url, verbose):
+def check_for_config_files(domain, verbose):
 
     results = {}
-    for file_path, description in config_files.items():
-        if "https://" not in url:
-            url = "https://" + url
-        url = f"https://{url}{file_path}"
+    if "https://" not in domain:
+        domain = "https://" + domain
 
+    for file_path, description in config_files.items():
+        url = f"https://{domain}{file_path}"
         if verbose:
             print(f"[Info] Checking for config file {url}")
         try:
@@ -119,6 +119,7 @@ def check_for_config_files(url, verbose):
             if response.status_code == 200:
                 results[file_path] = response.text
         except requests.RequestException as e:
-            results[file_path] = f"Error: {str(e)}" # Save it anyway there might be something here
+            if verbose:
+                print(f"Error: {str(e)}") # Save it anyway there might be something here
 
     return results

@@ -19,6 +19,7 @@ def get_ssl_certificate(hostname):
 def ssl_cert_analysis(domain):
     if domain.find("https://") != -1:
         domain = "https://" + domain
+    domain = domain.split('/', 1)[0]
     cert = get_ssl_certificate(domain)
     ssl_cert["subject"] = str(cert.subject.rfc4514_string())
     ssl_cert["issuer"] = str(cert.issuer.rfc4514_string())

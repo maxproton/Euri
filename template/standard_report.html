@@ -10,71 +10,268 @@
     <div class="container my-4">
         <!-- Report Header -->
         <div class="text-center mb-4">
-            <h1 class="fw-bold">Site Analysis Report</h1>
+            <h1 class="fw-bold">{{ heading }}</h1>
             <p class="text-muted">Generated on: <span id="reportDate"></span></p>
         </div>
 
-        <!-- Summary Section -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h4 class="card-title">Summary</h4>
+                <h4 class="card-title">DNS records</h4>
             </div>
             <div class="card-body">
-                {% for item in items %}
-
-                {% endfor %}
-                <p><strong>Domain:</strong> example.com</p>
-                <p><strong>Discovered Pages:</strong> 125</p>
-                <p><strong>Subdomains:</strong> 10</p>
-                <p><strong>Security Warnings:</strong> 2</p>
+                <ul class="list-group">
+                    {% for key, item in dns_records.items() %}
+                        {% for record in item %}
+                            <li class="list-group-item text-wrap"><strong>{{ key }}:</strong> {{ record }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
             </div>
         </div>
 
-        <!-- Server Information -->
+        {% if sub_domains['new'] | length > 0 %}
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
-                <h4 class="card-title">Server Information</h4>
+                <h4 class="card-title">Sub Domains</h4>
             </div>
             <div class="card-body">
                 <ul class="list-group">
-                    <li class="list-group-item"><strong>Server:</strong> Apache 2.4.52</li>
-                    <li class="list-group-item"><strong>Language:</strong> PHP 8.1</li>
-                    <li class="list-group-item"><strong>Frameworks:</strong> Laravel 9.2, Bootstrap 5</li>
+                    {% for item in sub_domains['new'] %}
+                        <li class="list-group-item text-wrap">{{ item | safe }}</li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
+        {% endif %}
 
-        <!-- Security Analysis -->
-        <div class="card mb-4">
-            <div class="card-header bg-danger text-white">
-                <h4 class="card-title">Security Analysis</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-warning">Potential risks found:</p>
-                <ul class="list-group">
-                    <li class="list-group-item">Misconfigured <code>.git</code> directory</li>
-                    <li class="list-group-item">Exposed <code>config.php</code> file</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Sitemap & Discovered Pages -->
         <div class="card mb-4">
             <div class="card-header bg-info text-white">
-                <h4 class="card-title">Sitemap & Discovered Pages</h4>
+                <h4 class="card-title">Site pages</h4>
+                <p>
+                    These are scraped from the website, sitemap, robots.txt. These only include links returning 200. For dead links and 403 see dead links section
+                </p>
             </div>
             <div class="card-body">
                 <ul>
-                    <li><a href="/about-us">/about-us</a></li>
-                    <li><a href="/contact">/contact</a></li>
-                    <li><a href="/privacy-policy">/privacy-policy</a></li>
+                    {% for url in pages %}
+                        <li><a href="{{ url }}" target="_blank">{{ url }}</a></li>
+                    {% endfor %}
+                    {% for url in links['live'] %}
+                        <li><a href="{{ url }}" target="_blank">{{ url }}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
 
+         <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">SSL Certificate Analysis</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, item in ssl_certificates["main"].items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}:</strong> {{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="card-title">Headers</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, item in headers.items() %}
+                        {% for record_type, record in item.items() %}
+                            <li class="list-group-item text-wrap"><strong>{{ record_type }}:</strong> {{ record }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Cookies</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in cookies.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}:</strong> {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% if email_addresses | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Email Addresses</h4>
+                <p> taken from SSL certs, DNS records and content of the site</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for value in email_addresses %}
+                        <li class="list-group-item text-wrap">{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% if technology_stack | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Identified Technology Stack</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in technology_stack.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong>{% for val in value %}{{ val }}<br>{% endfor %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% if config_files | length > 0 %}
+         <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="card-title">Config files identified</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in config_files.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong>{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% if git_repo | length > 0 %}
+         <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h4 class="card-title">Git Repos</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in git_repo.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong>{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% if images | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Image Analysis</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in images.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong>
+                            {% for key_image, value_image in value.items() %}{% if key_image == 'location' %}<span class="badge text-bg-danger">GPS INFORMATION </span>{% endif %}{{ key_image }}: {{ value_image }}<br>{% endfor %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="card-title">Dead links & 403's</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in links.items() %}
+                        {% if key == "dead" %}
+                            <li class="list-group-item text-wrap"><span class="badge text-bg-danger">DEAD</span><strong>{{ key }}</strong>{{ value }}</li>
+                        {% endif %}
+                        {% if key == "403" %}
+                            <li class="list-group-item text-wrap"><span class="badge text-bg-warning">403</span><strong>{{ key }}</strong>{{ value }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% if social | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Social Media Links</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in social.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% if repo | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h4 class="card-title">Source Control Links</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for key, value in repo.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="card-title">Content Analysis</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item text-wrap"><strong>Content Word Count:</strong> {{ word_count }}</li>
+                    {% for key, value in content_hash.items() %}
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                    {% endfor %}
+                    {% for value in comments %}
+                        <li class="list-group-item text-wrap"><strong>COMMENT: </strong>{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% if ip_addresses | length > 0 %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h4 class="card-title">IP Addresses</h4>
+                <p>These are derived from DNS records, searches of the content</p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for value in ip_addresses %}
+                        <li class="list-group-item text-wrap">{{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title">Dictionary of content</h4>
+                <p>Every work on the site broken down into a single word and arranged in alphabetical order</p>
+            </div>
+            <div class="card-body">
+                <table class="table table-border">
+                    {% for key, value in dictionary.items() %}
+                            <tr>
+                               <td>{{ key }}</td>
+                            </tr>
+                    {% endfor %}
+                </table>
+                </ul>
+            </div>
+        </div>
         <!-- Footer -->
         <footer class="text-center mt-4">
-            <p class="text-muted">&copy; 2024 Your Tool Name. All rights reserved.</p>
+            <p class="text-muted">Created by Euri. .</p>
         </footer>
     </div>
 

@@ -70,6 +70,8 @@ def extract_image_metadata(html_content, domain):
 
     for img_url in image_urls:
         metadata = {}
+        if "/" not in img_url:
+            img_url = "/" + img_url
         if domain not in img_url:
             img_url = domain + img_url
         try:
@@ -136,6 +138,11 @@ def link_harvest(domain: str, html_content: str, verbose: bool):
                     access_denied.append(link_url)
                     if verbose:
                         print(f"[Info][Link] Link discovered with a 403 {link_url}")
+            if link_response.status_code == 302:
+                if link_url not in live_links:
+                    live_links.append(link_url)
+                    if verbose:
+                        print(f"[Info][Link] Link discovered alive but with a 301 {link_url}")
         except requests.exceptions.RequestException as e:
             if link_url not in dead_links:
                 dead_links.append(link_url)
