@@ -40,7 +40,8 @@ frameworks = {
             'OpenResty': 'A web platform based on Nginx and Lua',
             'Varnish': 'A caching HTTP reverse proxy',
             'Oracle-HTTP-Server': 'Oracle\'s web server',
-            'Cowboy': 'A lightweight web server commonly used with Heroku apps'
+            'Cowboy': 'A lightweight web server commonly used with Heroku apps',
+            'AmazonS3': 'Amazon S3 bucket'
         }
     },
     'library': {

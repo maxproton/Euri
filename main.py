@@ -51,13 +51,62 @@ def parse_arguments():
     parser.add_argument("-bb", "--no-subdomain-brute", action="store_true", help="Do not perform a subdomain brute force")
     parser.add_argument("-te", "--no-found-size", type=int, required=False, help="Some sites return 200 with custom error page, use this to specify the size of the error page")
     parser.add_argument("-ta", "--no-found-text", type=str, required=False, help="Some sites return 200 with custom error page, use this to specify the text to look for in an error page")
-    parser.add_argument("-tb", "--no-found-size-tol", type=int, required=False, help="Provide a tolerance level +- for checking content length")
+    parser.add_argument("-ba", "--check-page", action="store_true", help="Use this to find out the average page size of an error page")
+    parser.add_argument("-bc", "--exif", action="store_true",
+                        help="Use this to just check imags on the system for exif data")
+    parser.add_argument("-bd", "--direct", action="store_true",
+                        help="Use this to just check imags on the system for exif data directly")
     return parser.parse_args()
 
 if __name__ == '__main__':
     print(banner.banner)
     args = parse_arguments()
     load_dotenv()
+
+    if args.check_page:
+        if args.domain is None:
+            print(f"[Error] no Domain provided use --domain [domain]")
+            exit(1)
+        else:
+            print(module_pages.get_page_size(args.domain))
+        exit(1)
+
+    if args.exif:
+        if args.domain is None:
+            print(f"[Error] no Domain provided use --domain [domain]")
+            exit(1)
+        elif args.direct:
+            print(f"[Task] Checking images on {args.domain}")
+            images = module_content_analysis.extract_image_direct(args.domain)
+            data = {
+                'title': f"Euri image report for {args.domain}",
+                'heading': f"Target: {args.domain}",
+                'images': images,
+            }
+
+            report_title = module_report.generate_image_summary(data, args.domain)
+            print(f"[Task] Finshed. Report available at {report_title}")
+        else:
+            # all images and meta data
+            print(f"[Task] Checking images on {args.domain}")
+            content = module_content_analysis.get_content(args.domain)
+            images = module_content_analysis.extract_image_metadata(content, args.domain)
+            if args.verbose:
+                for image_url, metadata in images.items():
+                    print(f"[Info][Images] Image {image_url} contains the following metadata")
+                    for metadata_key, metadata_value in metadata.items():
+                        print(f"[Info][Images][{image_url}] {metadata_key} : {metadata_value}")
+            print(f"[Task] Generating Report..")
+
+            data = {
+                'title': f"Euri image report for {args.domain}",
+                'heading': f"Target: {args.domain}",
+                'images': images,
+            }
+
+            report_title = module_report.generate_image_summary(data, args.domain)
+            print(f"[Task] Finshed. Report available at {report_title}")
+        exit(1)
 
     # DNS lookup
     print(f"[Task] Performing DNS Lookup for {args.domain}.")
@@ -159,8 +208,7 @@ if __name__ == '__main__':
         args.domain,
         args.verbose,
         no_found_size,
-        no_found_text,
-        args.no_found_size_tol
+        no_found_text
     )
 
     server = {}
@@ -217,15 +265,6 @@ if __name__ == '__main__':
     print(f"[Task] Starting content analysis.")
     content = module_content_analysis.get_content(args.domain)
 
-    # all images and meta data
-    print(f"[Task] Checking images on {args.domain}")
-    images = module_content_analysis.extract_image_metadata(content, args.domain)
-    if args.verbose:
-        for image_url, metadata in images.items():
-            print(f"[Info][Images] Image {image_url} contains the following metadata")
-            for metadata_key, metadata_value in metadata.items():
-                print(f"[Info][Images][{image_url}] {metadata_key} : {metadata_value}")
-
     # all links and indexing (interal add external note)
     print(f"[Task] Checking link in content.")
     links = module_content_analysis.link_harvest(args.domain, content, args.verbose)
@@ -241,6 +280,23 @@ if __name__ == '__main__':
             if keys == "403":
                 for url in values:
                     print(f"[Info][unauthorised] {url}")
+
+    #establish how many of those links are images
+    link_images = {}
+    for key, values in links.items():
+        if key == "live":
+            for value in values:
+                if module_content_analysis.check_link_for_image(value):
+                    link_images[value] = value
+
+    # all images and meta data
+    print(f"[Task] Checking images on {args.domain}")
+    images = module_content_analysis.extract_image_metadata(content, args.domain, link_images, args.verbose)
+    if args.verbose:
+        for image_url, metadata in images.items():
+            print(f"[Info][Images] Image {image_url} contains the following metadata")
+            for metadata_key, metadata_value in metadata.items():
+                print(f"[Info][Images][{image_url}] {metadata_key} : {metadata_value}")
 
     # social media links
     print(f"[Task] Checking for Social Media links.")

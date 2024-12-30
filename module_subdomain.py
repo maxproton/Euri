@@ -111,8 +111,11 @@ def detect_bad_response(domain, verbose):
     length = 6
     random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
     domain = domain.replace("https://", "")
+    try:
+        response = requests.get("https://" + random_string + "." + domain)
+    except Exception:
+        return 0
 
-    response = requests.get("https://" + random_string + "." + domain)
     if response.status_code != 200:
         return 0
     else:

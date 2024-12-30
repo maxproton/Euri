@@ -1,3 +1,6 @@
+
+import os
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
@@ -23,6 +26,7 @@ social_media_links = {
     "vimeo.com": "Vimeo",
     "whatsapp.com": "WhatsApp",
     "wechat.com": "WeChat",
+    "itch.io": "Itch"
 }
 
 repo = {
@@ -62,14 +66,120 @@ def get_content(domain):
     except requests.RequestException as e:
         return "0"
 
+def convert_to_degrees(value):
+    """Convert GPS coordinates from EXIF format to degrees."""
+    def rational_to_float(rational):
+        return rational[0] / rational[1] if isinstance(rational, tuple) else float(rational)
 
-def extract_image_metadata(html_content, domain):
+    d = rational_to_float(value[0])
+    m = rational_to_float(value[1])
+    s = rational_to_float(value[2])
+    return d + (m / 60.0) + (s / 3600.0)
+def extract_image_direct(img_url):
+    images = {}
+    metadata = {}
+    try:
+        response = requests.get(img_url, timeout=10)
+        response.raise_for_status()
+        image_content = io.BytesIO(response.content)
+        image = Image.open(image_content)
+        metadata['url'] = img_url
+        metadata['format'] = image.format
+        metadata['size'] = image.size
+
+        exif_data = image._getexif()
+        if exif_data:
+            exif = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+
+            # Camera info
+            metadata['camera_info'] = {
+                'Make': exif.get('Make'),
+                'Model': exif.get('Model'),
+            }
+
+            # GPS Info
+            gps_info = exif.get('GPSInfo')
+            if gps_info:
+                gps_parsed = {GPSTAGS.get(key, key): val for key, val in gps_info.items()}
+                if 'GPSLatitude' in gps_parsed and 'GPSLongitude' in gps_parsed:
+                    latitude = convert_to_degrees(gps_parsed['GPSLatitude'])
+                    longitude = convert_to_degrees(gps_parsed['GPSLongitude'])
+                    latitude_ref = gps_parsed.get('GPSLatitudeRef', 'N')
+                    longitude_ref = gps_parsed.get('GPSLongitudeRef', 'E')
+
+                    if latitude_ref == 'S': latitude = -latitude
+                    if longitude_ref == 'W': longitude = -longitude
+
+                    metadata['location'] = f"{latitude}, {longitude}"
+
+    except Exception as e:
+        print(f"[Error] Failed to get metadata for image {img_url}: {e}")
+    images[img_url] = metadata
+    images[img_url] = metadata
+    return images
+
+def extract_image_metadata(html_content, domain, link_images, verbose):
+    images = {}
+    soup = BeautifulSoup(html_content, 'html.parser')
+    image_urls = [img.get('src') for img in soup.find_all('img') if img.get('src')]
+    image_urls.append(link_images)
+
+    for img_url in image_urls:
+        metadata = {}
+        img_url = urljoin(domain, img_url)  # Construct absolute URL
+
+        try:
+            response = requests.get(img_url, timeout=10)
+            response.raise_for_status()
+            image_content = io.BytesIO(response.content)
+            image = Image.open(image_content)
+            metadata['url'] = img_url
+            metadata['format'] = image.format
+            metadata['size'] = image.size
+
+            exif_data = image._getexif()
+            if exif_data:
+                exif = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+
+                # Camera info
+                metadata['camera_info'] = {
+                    'Make': exif.get('Make'),
+                    'Model': exif.get('Model'),
+                }
+
+                # GPS Info
+                gps_info = exif.get('GPSInfo')
+                if gps_info:
+                    def convert_to_degrees(value):
+                        d, m, s = value
+                        return d[0] / d[1] + (m[0] / m[1]) / 60 + (s[0] / s[1]) / 3600
+
+                    if 2 in gps_info and 4 in gps_info:
+                        metadata['location'] = f"{gps_info[1]} {gps_info[2]}, {gps_info[3]}{gps_info[4]}"
+                    else:
+                        metadata['location'] = exif.get('GPSInfo')
+            images[img_url] = metadata
+        except Exception as e:
+            if verbose:
+                print(f"[Error] Failed to get metadata for image {img_url}: {e}")
+
+
+    return images
+def check_link_for_image(link):
+    image_extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+    if any(link.lower().endswith(ext) for ext in image_extensions):
+        return True
+    return False
+
+
+def extract_image_metadata_old(html_content, domain):
     images = {}
     soup = BeautifulSoup(html_content, 'html.parser')
     image_urls = [img.get('src') for img in soup.find_all('img') if img.get('src')]
 
     for img_url in image_urls:
         metadata = {}
+        domain = os.path.dirname(domain)
         if "/" not in img_url:
             img_url = "/" + img_url
         if domain not in img_url:
@@ -85,6 +195,25 @@ def extract_image_metadata(html_content, domain):
 
             exif_data = image._getexif()
             if exif_data:
+                gps_info = exif.get('GPSInfo')
+                if gps_info:
+                    def convert_to_degrees(value):
+                        d, m, s = value
+                        return d[0] / d[1] + (m[0] / m[1]) / 60 + (s[0] / s[1]) / 3600
+
+                    latitude = convert_to_degrees(gps_info[2]) if 2 in gps_info else None
+                    longitude = convert_to_degrees(gps_info[4]) if 4 in gps_info else None
+
+                    if latitude and longitude:
+                        latitude_ref = gps_info[1]
+                        longitude_ref = gps_info[3]
+
+                        # Adjust latitude and longitude based on reference
+                        if latitude_ref == 'S': latitude = -latitude
+                        if longitude_ref == 'W': longitude = -longitude
+
+                        metadata['location'] = f"{latitude}, {longitude}"
+
                 exif = {TAGS.get(tag, tag): value for tag, value in exif_data.items() if tag in TAGS}
 
                 # Include camera
@@ -94,10 +223,10 @@ def extract_image_metadata(html_content, domain):
                 }
 
                 # Extract GPS Info if present
-                gps_info = exif.get('GPSInfo')
-                if gps_info:
-                    gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info if t in GPSTAGS}
-                    metadata['location'] = gps_data
+                if 'GPS GPSLatitude' in metadata and 'GPS GPSLongitude' in metadata:
+                    latitude = exif.get('GPS GPSLatitude')
+                    longitude = exif.get('GPS GPSLongitude')
+                    metadata['location'] = f"{latitude} - {longitude}"
 
         except Exception as e:
             #dont do anything yet
@@ -207,4 +336,9 @@ def extract_comments_from_html(html_content):
     # js_comments = re.findall(js_comment_pattern, html_content)
     all_comments = html_comments #+ js_comments
 
-    return all_comments
+    comments = []
+    for cmt in all_comments:
+        if cmt != "":
+            comments.append(cmt
+                            )
+    return comments

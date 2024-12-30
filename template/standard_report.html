@@ -48,7 +48,8 @@
             <div class="card-header bg-info text-white">
                 <h4 class="card-title">Site pages</h4>
                 <p>
-                    These are scraped from the website, sitemap, robots.txt. These only include links returning 200. For dead links and 403 see dead links section
+                    These are scraped from the website, sitemap, robots.txt. These only include links returning 200. For dead links and 403 see dead links section. They
+                    are also available at {{ file_name }}links.txt
                 </p>
             </div>
             <div class="card-body">
@@ -127,7 +128,7 @@
             <div class="card-body">
                 <ul class="list-group">
                     {% for key, value in technology_stack.items() %}
-                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong>{% for val in value %}{{ val }}<br>{% endfor %}</li>
+                        <li class="list-group-item text-wrap"><strong>{{ key }}: </strong><br>{% for val in value %}{{ val }}<br>{% endfor %}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -185,10 +186,14 @@
                 <ul class="list-group">
                     {% for key, value in links.items() %}
                         {% if key == "dead" %}
-                            <li class="list-group-item text-wrap"><span class="badge text-bg-danger">DEAD</span><strong>{{ key }}</strong>{{ value }}</li>
+                            {% for vals in value %}
+                                <li class="list-group-item text-wrap"><span class="badge text-bg-danger">DEAD</span>&nbsp;{{ vals }}</li>
+                            {% endfor %}
                         {% endif %}
                         {% if key == "403" %}
-                            <li class="list-group-item text-wrap"><span class="badge text-bg-warning">403</span><strong>{{ key }}</strong>{{ value }}</li>
+                            {% for vals in value %}
+                                <li class="list-group-item text-wrap"><span class="badge text-bg-warning">403</span>&nbsp;{{ vals }}</li>
+                            {% endfor %}
                         {% endif %}
                     {% endfor %}
                 </ul>
@@ -202,7 +207,7 @@
             <div class="card-body">
                 <ul class="list-group">
                     {% for key, value in social.items() %}
-                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong> {{ value }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -216,7 +221,7 @@
             <div class="card-body">
                 <ul class="list-group">
                     {% for key, value in repo.items() %}
-                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong> {{ value }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -230,10 +235,10 @@
                 <ul class="list-group">
                     <li class="list-group-item text-wrap"><strong>Content Word Count:</strong> {{ word_count }}</li>
                     {% for key, value in content_hash.items() %}
-                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong>{{ value }}</li>
+                        <li class="list-group-item text-wrap"><strong>{{ key }}</strong> {{ value }}</li>
                     {% endfor %}
                     {% for value in comments %}
-                        <li class="list-group-item text-wrap"><strong>COMMENT: </strong>{{ value }}</li>
+                        <li class="list-group-item text-wrap"><strong>COMMENT: </strong> {{ value }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -256,17 +261,10 @@
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h4 class="card-title">Dictionary of content</h4>
-                <p>Every work on the site broken down into a single word and arranged in alphabetical order</p>
+                <p>Every word on the site broken down into a single word and arranged in alphabetical order</p>
             </div>
             <div class="card-body">
-                <table class="table table-border">
-                    {% for key, value in dictionary.items() %}
-                            <tr>
-                               <td>{{ key }}</td>
-                            </tr>
-                    {% endfor %}
-                </table>
-                </ul>
+                Available at {{ file_name }}dictionary.txt
             </div>
         </div>
         <!-- Footer -->
