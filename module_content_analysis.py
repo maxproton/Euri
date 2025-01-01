@@ -8,6 +8,7 @@ import requests
 import io
 from urllib.parse import urlparse
 import re
+import helper
 
 social_media_links = {
     "facebook.com": "Facebook",
@@ -338,7 +339,7 @@ def extract_comments_from_html(html_content):
 
     comments = []
     for cmt in all_comments:
-        if cmt != "":
-            comments.append(cmt
-                            )
+        if helper.has_letter_or_number(cmt):
+            comments.append(cmt)
+
     return comments

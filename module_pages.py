@@ -8,6 +8,7 @@ import requests
 import re
 from xml.etree import ElementTree
 from bs4 import BeautifulSoup
+import helper
 
 def robots(domain):
     robots_url = f"https://{domain}/robots.txt"
@@ -57,9 +58,12 @@ def fetch_sitemap(sitemap_url):
         response = requests.get(sitemap_url, timeout=10)
         response.raise_for_status()
         # Parse XML to extract URLs
-        tree = ElementTree.fromstring(response.content)
-        urls = [elem.text for elem in tree.iter() if elem.tag.endswith("loc")]
-        return urls
+        if helper.is_sitemap_xml(response.content):
+            tree = ElementTree.fromstring(response.content)
+            urls = [elem.text for elem in tree.iter() if elem.tag.endswith("loc")]
+            return urls
+        else:
+            return []
     except requests.exceptions.RequestException as e:
         print(f"[Error] Could not fetch sitemap {sitemap_url}")
         return []

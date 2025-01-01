@@ -7,7 +7,7 @@ def generate_summary(data, domain):
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template('template/standard_report.html')
     current_time = datetime.now()
-    formatted_time = current_time.strftime("%Y%m%d%H%M%S")
+    formatted_time = current_time.strftime("%Y%m%d")
     data['file_name'] = f"reports/{domain}-{formatted_time}-"
     output = template.render(data)
     with open(f"reports/{domain}-{formatted_time}-report-standard.html", 'w') as f:
@@ -19,6 +19,10 @@ def generate_summary(data, domain):
 
     with open(f"reports/{domain}-{formatted_time}-links.txt", "w") as file:
         for item in data['links']['live']:
+            file.write(f"{item}\n")
+
+    with open(f"reports/{domain}-{formatted_time}-subdomains.txt", "w") as file:
+        for item in data['sub_domains']['new']:
             file.write(f"{item}\n")
 
     return f"reports/{domain}-{formatted_time}-report-standard.html"

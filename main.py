@@ -3,10 +3,6 @@ import csv
 import argparse
 import banner
 import module_framework
-import module_headers
-import module_ssl
-import ports
-import json
 import module_dns
 import module_subdomain
 import module_ssl
@@ -15,6 +11,7 @@ import module_email
 import module_pages
 import module_report
 import module_config
+import helper
 import module_content_analysis
 from dotenv import load_dotenv
 import os
@@ -393,7 +390,8 @@ if __name__ == '__main__':
         'dictionary': dictionary,
         'content_hash': content_hash,
         'ip_addresses': ip_addresses,
-        'comments': comments
+        'comments': comments,
+        'external': helper.external
     }
 
 

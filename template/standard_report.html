@@ -260,21 +260,48 @@
         {% endif %}
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h4 class="card-title">Dictionary of content</h4>
-                <p>Every word on the site broken down into a single word and arranged in alphabetical order</p>
+                <h4 class="card-title">External lists generated</h4>
             </div>
             <div class="card-body">
-                Available at {{ file_name }}dictionary.txt
+                <ul>
+                    <li>{{ file_name }}dictionary.txt</li>
+                    <li>{{ file_name }}subdomains.txt</li>
+                    <li>{{ file_name }}links.txt</li>
+                </ul>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h4 class="card-title">External Tool list</h4>
+                <p>Further resources to try</p>
+            </div>
+            <div class="card-body">
+                <ul>
+                    {% for key, value in external.items() %}
+                        <li><a href="{{ value }}" class="btn btn-primary" target="_blank">{{ key }}</a></li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
         <!-- Footer -->
         <footer class="text-center mt-4">
-            <p class="text-muted">Created by Euri. .</p>
+            <p class="text-muted">Created by Euri, the crazy Russian Internet Truffle Hog!.</p>
+            <pre>
+ /$$$$$$$$ /$$   /$$ /$$$$$$$  /$$$$$$
+| $$_____/| $$  | $$| $$__  $$|_  $$_/
+| $$      | $$  | $$| $$  \ $$  | $$
+| $$$$$   | $$  | $$| $$$$$$$/  | $$
+| $$__/   | $$  | $$| $$__  $$  | $$
+| $$      | $$  | $$| $$  \ $$  | $$
+| $$$$$$$$|  $$$$$$/| $$  | $$ /$$$$$$
+|________/ \______/ |__/  |__/|______/
+
+  'You crazy son of a bitch'
+            </pre>
         </footer>
     </div>
 
     <script>
-        // Populate the report date dynamically
         document.getElementById('reportDate').textContent = new Date().toLocaleString();
     </script>
 </body>
