@@ -44,8 +44,10 @@ cd MpRecon
 
 pip install -r requirements.txt
 touch .env
-echo "LIST_DIR="lists" > .env
-echo "REPORT_DIR="reports" > ./env
+cat >> .env <<<EOF
+LIST_DIR="lists" 
+REPORT_DIR="reports"
+EOF
 
 ```
 ## Usage
