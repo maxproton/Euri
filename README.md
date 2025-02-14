@@ -39,8 +39,8 @@ This tool processes a given domain and performs various operations on its lines.
 Ensure you have Python installed (>=3.6). Clone this repository and navigate into the directory:
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/maxproton/MpRecon
+cd MpRecon
 
 pip install -r requirements.txt
 ```
