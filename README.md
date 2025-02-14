@@ -53,20 +53,20 @@ EOF
 ## Usage
 ### Basic
 ```bash
-python mprecon.py --domain example.com [OPTIONS]
+python main.py --domain example.com [OPTIONS]
 ```
 ### Supress DNS and use Verbose
 ```bash
-python mprecon.py --domain example.com --verbose --suppress-less-common-dns
+python main.py --domain example.com --verbose --suppress-less-common-dns
 ```
 ### Disable Google Search and header check
 ```bash
-python mprecon.py --domain example.com --no-google --no-header-check
+python main.py --domain example.com --no-google --no-header-check
 ```
 ### Custom Error Pages 
 Sometimes these are a pain! so you can customise the detection of error pages for page enumeration
 ```bash
-python mprecon.py --domain example.com --no-found-size 1024 --no-found-text "Error occurred"
+python main.py --domain example.com --no-found-size 1024 --no-found-text "Error occurred"
 ```
 
 ## Arguments
