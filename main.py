@@ -2,7 +2,6 @@ import csv
 
 import argparse
 import banner
-import module_link_scaper
 import module_framework
 import module_dns
 import module_subdomain
