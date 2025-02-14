@@ -1,57 +1,80 @@
-# Euri
-### We send his crazy ass accross the internet and back again looking for treasure.
+```
+            /$$      /$$ /$$$$$$$  /$$$$$$$                                         
+            | $$$    /$$$| $$__  $$| $$__  $$                                        
+            | $$$$  /$$$$| $$  \ $$| $$  \ $$  /$$$$$$   /$$$$$$$  /$$$$$$  /$$$$$$$ 
+            | $$ $$/$$ $$| $$$$$$$/| $$$$$$$/ /$$__  $$ /$$_____/ /$$__  $$| $$__  $$
+            | $$  $$$| $$| $$____/ | $$__  $$| $$$$$$$$| $$      | $$  \ $$| $$  \ $$
+            | $$\  $ | $$| $$      | $$  \ $$| $$_____/| $$      | $$  | $$| $$  | $$
+            | $$ \/  | $$| $$      | $$  | $$|  $$$$$$$|  $$$$$$$|  $$$$$$/| $$  | $$
+            |__/     |__/|__/      |__/  |__/ \_______/ \_______/ \______/ |__/  |__/
+                                                                         
+                                                                         
+                                                                         
 
-#### Project Scope
-Euri combines the principals and ideas of various OSINT tools into one single place, primarily to save time and make data collection more uniformed. We arn't inventing the wheel here, so where technology exists already and its open source we use it, and credit it's creator accordingly. 
+                                  (c) Maxproton Labs
+                            Licensed under Apache License 2.0
 
-## Currently supported features
-### DNS lookup
-we perform a standard DNS lookup and collect the DNS records, if there happen to be CNAMES which match the subdomain parsers requirements we add that to
-the subdomains list. The parser tries to match all dns record types, this includes a list of
-less common ones, if you want to skip the less common ones, use the following argument 
-```commandline
---suppress-less-common-dns
+              Please do not use in military or for illegal purposes.
+         (This is the wish of the author and non-binding. Many people working
+          in these organizations do not care for laws and ethics anyways.
+               You are not one of the "good" ones if you ignore this.)
 ```
 
-### Subdomain lookup
-Using the google search API Euri performs a lookup using good dorks to try and discover subdomains. 
-It then does a subdomain enumeration check using the inbuilt dictionary. To skip the google look up use the flag :
-```commandline
---no-google 
+## Overview
+
+This tool processes a given domain and performs various operations on its lines. It allows for suppression of certain checks, customization of error detection, and provides detailed verbosity control.
+
+## Features
+
+- Analyze a given domain for various attributes.
+- Option to suppress less common DNS record checks.
+- Control verbosity of output.
+- Disable Google search queries.
+- Skip header analysis for framework detection.
+- Disable subdomain brute force.
+- Custom handling for websites that return 200 status codes with error pages.
+
+## Installation
+
+Ensure you have Python installed (>=3.6). Clone this repository and navigate into the directory:
+
+```bash
+git clone <repository-url>
+cd <repository-directory>
+
+pip install -r requirements.txt
 ```
-to skip the subdomain enumeration use:
-```commandline
---no-subdomain-brute
+## Usage
+### Basic
+```bash
+python mprecon.py --domain example.com [OPTIONS]
 ```
-### SSL Certificate Lookup
-Euri will check the content of the ssl certificate from the main site and verify the issuer, and valid from and valid too dates
-
-### Header grab and analysis
-The next thing it does is pulls the headers from the website and stores them for analysis, 
-the analysis part it looks for hints of technology stack, which it late combines with the page analysis
-if you wish to skip the analysis use the following flag
-```commandline
---no-header-check
+### Supress DNS and use Verbose
+```bash
+python mprecon.py --domain example.com --verbose --suppress-less-common-dns
 ```
-
-### Cookie Grabbing 
-After its obtained a headers list, it finds the cookies and takes them and puts them in its cookie jar
-for consumption later.
-
-### Directory Enumeration
-This is a standard enumeration , if it returns a 200 all is good, if it returns a 404
-it isnt there. However sometimes a custom error page is thrown with a 200, so you can do a trial run
-to get the size of the page, or you can target a specific text string in the error page. 
-Use the following arguments to target the size and tolerance or the string
-```commandline
---no-found-size {size} --no-found-size-tol {tolerance + or - X}
---no-found-text {text to search for for example 'not found'}
+### Disable Google Search and header check
+```bash
+python mprecon.py --domain example.com --no-google --no-header-check
+```
+### Custom Error Pages 
+Sometimes these are a pain! so you can customise the detection of error pages for page enumeration
+```bash
+python mprecon.py --domain example.com --no-found-size 1024 --no-found-text "Error occurred"
 ```
 
-### Lists
-Its important to note Euri does not ship with lists re-installed. Please place your own 
-lists for enumeration in the lists folder under the appropriate name. 
+## Arguments
 
-### Config hunting
-The script does a check for config files (Standard IIS, nginx, apache2 and tomcat servers) and also for .git files
-the present of a .git file would indicate a potential github leak. 
+| Argument                    | Short Flag | Description                                                                 | Required |
+|-----------------------------|------------|-----------------------------------------------------------------------------|----------|
+| --domain                    | -d         | The initial domain to analyze.                                               | Yes      |
+| --suppress-less-common-dns   | -s         | Suppress less common DNS record checks.                                      | No       |
+| --verbose                   | -v         | Show detailed output of all operations.                                      | No       |
+| --no-google                 | -g         | Disable Google search queries.                                               | No       |
+| --no-header-check           | -aa        | Skip analysis of response headers for framework clues.                       | No       |
+| --no-subdomain-brute        | -bb        | Disable subdomain brute force.                                               | No       |
+| --no-found-size             | -te        | Define the expected size of an error page (useful for sites that return 200 on errors). | No       |
+| --no-found-text             | -ta        | Define text expected in an error page to filter false positives.             | No       |
+
+## Licence
+Licensed under Apache License 2.0
