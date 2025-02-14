@@ -52,7 +52,7 @@ def parse_arguments():
     parser.add_argument("-ta", "--no-found-text", type=str, required=False, help="Some sites return 200 with custom error page, use this to specify the text to look for in an error page")
     parser.add_argument("-bc", "--exif", action="store_true", help="Use this to just check imags on the system for exif data")
     parser.add_argument("-bd", "--direct", action="store_true", help="Use this to just check imags on the system for exif data directly")
-    parser.add_argument("-be", "--pages", action="store_true", help="Use this to parse a specific pages from the domain enumeration run also requires the --page-file argument")
+    parser.add_argument("-be", "--page", action="store_true", help="Use this to parse a specific pages from the domain enumeration run also requires the --page-file argument")
     parser.add_argument("-bf", "--page-file", type=str, required=False, help="Provide a text file full of fully qualified pages to enumerate")
     parser.add_argument("-bg", "--include-sub-pages", action="store_true", help="enumerates pages discovered")
     return parser.parse_args()
@@ -467,9 +467,6 @@ if __name__ == '__main__':
         'comments': comments,
         'external': helper.external
     }
-
-
     report_title = module_report.generate_summary(data, args.domain)
     print(f"[Task] Finshed. Report available at {report_title}")
 
-    if args.include_sub_pages:
