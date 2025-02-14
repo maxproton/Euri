@@ -76,5 +76,13 @@ python mprecon.py --domain example.com --no-found-size 1024 --no-found-text "Err
 | --no-found-size             | -te        | Define the expected size of an error page (useful for sites that return 200 on errors). | No       |
 | --no-found-text             | -ta        | Define text expected in an error page to filter false positives.             | No       |
 
+## Using google search
+In order to use the google search feature you need to add the following to the .env file
+
+```bash
+GOOGLE_SEARCH_API_KEY="{key}"
+GOOGLE_SEARCH_ID="{id}"
+```
+
 ## Licence
 Licensed under Apache License 2.0
