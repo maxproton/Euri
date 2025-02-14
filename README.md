@@ -43,6 +43,10 @@ git clone https://github.com/maxproton/MpRecon
 cd MpRecon
 
 pip install -r requirements.txt
+touch .env
+echo "LIST_DIR="lists" > .env
+echo "REPORT_DIR="reports" > ./env
+
 ```
 ## Usage
 ### Basic
@@ -80,8 +84,8 @@ python mprecon.py --domain example.com --no-found-size 1024 --no-found-text "Err
 In order to use the google search feature you need to add the following to the .env file
 
 ```bash
-GOOGLE_SEARCH_API_KEY="{key}"
-GOOGLE_SEARCH_ID="{id}"
+echo 'GOOGLE_SEARCH_API_KEY="{key}"' > .env
+echo 'GOOGLE_SEARCH_ID="{id}"' > .env
 ```
 
 ## Licence
