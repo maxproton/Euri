@@ -51,6 +51,7 @@ repo = {
     "https://perforce.com": "Perforce - A proprietary source control management system used for handling large-scale projects.",
     "https://clearcase.com": "ClearCase - An enterprise-grade version control and build software system by IBM."
 }
+
 def get_content(domain):
     if "https://" not in domain:
         domain = "https://" + domain

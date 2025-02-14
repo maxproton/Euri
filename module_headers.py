@@ -4,8 +4,11 @@ import service_header_requests
 
 def get_header(domain):
     headers = {}
+    if "https://" not in domain:
+        domain = f"https://{domain}"
+
     try:
-        request = Request("https://" + domain, headers=service_header_requests.request_headers())
+        request = Request(domain, headers=service_header_requests.request_headers())
         response = urlopen(request, timeout=20)
         headers = response.info()
     except HTTPError as e:
