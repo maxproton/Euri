@@ -38,17 +38,13 @@ This tool processes a given domain and performs various operations on its lines.
 
 Ensure you have Python installed (>=3.6). Clone this repository and navigate into the directory:
 
+Run the install bash.
+
+Please note!! --break-system-packages is used!
 ```bash
 git clone https://github.com/maxproton/MpRecon
 cd MpRecon
-
-pip install -r requirements.txt
-touch .env
-cat >> .env <<<EOF
-LIST_DIR="lists" 
-REPORT_DIR="reports"
-EOF
-
+bash install.sh
 ```
 ## Usage
 ### Basic
@@ -83,12 +79,31 @@ python main.py --domain example.com --no-found-size 1024 --no-found-text "Error 
 | --no-found-text             | -ta        | Define text expected in an error page to filter false positives.             | No       |
 
 ## Using google search
-In order to use the google search feature you need to add the following to the .env file
+In order to use the google search feature you need to add your keys to the following in the .env file
 
 ```bash
-echo 'GOOGLE_SEARCH_API_KEY="{key}"' > .env
-echo 'GOOGLE_SEARCH_ID="{id}"' > .env
+GOOGLE_SEARCH_API_KEY="{key}"
+GOOGLE_SEARCH_ID="{id}"
 ```
+## Custom report folder
+By default the setup creates a directory /reports. You can specify your own folder in the .env file
+by changing the following :
+
+```commandline
+REPORT_DIR="reports"
+```
+### Custom lists 
+MPRecon doesn't come with alot of lists, it ships with two sets of 'test' lists. You can change the lists directory
+in the .env file under 
+```commandline
+LIST_DIR="lists"
+```
+Please note there must be two .txt files within which ever folder you use called 
+```commandline
+pages.txt
+subdomains.txt
+```
+These are not customisable fields. 
 
 ## Licence
 Licensed under Apache License 2.0

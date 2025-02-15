@@ -79,7 +79,15 @@ if __name__ == '__main__':
     print(f"[Task] Performing non-bruteforce subdomain collection for {args.domain}.")
     dns_subdomains = module_subdomain.find_subdomains_with_nslookup(args.domain)
     google_dorks_subdomain = []
-    if not args.no_google:
+    use_google = True
+
+    if (os.getenv("GOOGLE_SEARCH_API_KEY") == "{key}"
+            or os.getenv("GOOGLE_SEARCH_ID") == "{id}"
+            or args.no_google):
+        use_google = False
+        print(f"[Task] Skipping google search - Missing Key or opted not too")
+
+    if use_google:
         print(f"[Task] Performing google search")
         google_dorks_subdomain = module_subdomain.google_search_links(
             args.domain,
